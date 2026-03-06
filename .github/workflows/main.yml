@@ -20,9 +20,11 @@ jobs:
       - name: Tạo User và bật RDP
         shell: powershell
         run: |
-          net user cuong DepTraiCuTo@0909 /add
-          net localgroup Administrators cuong /add
-          net localgroup "Remote Desktop Users" cuong /add
+          $password = ConvertTo-SecureString "DepTraiCuTo@0909Aa!" -AsPlainText -Force
+          New-LocalUser "cuong" -Password $password -FullName "cuong"
+
+          Add-LocalGroupMember -Group "Administrators" -Member "cuong"
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "cuong"
 
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
@@ -47,7 +49,7 @@ jobs:
           Write-Host "--------------------------------------"
           Write-Host "RDP HOST: $rdpHost"
           Write-Host "USER: cuong"
-          Write-Host "PASS: DepTraiCuTo@0909"
+          Write-Host "PASS: DepTraiCuTo@0909Aa!"
           Write-Host "--------------------------------------"
 
       - name: Giữ máy 6 tiếng
