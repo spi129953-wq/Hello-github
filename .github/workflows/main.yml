@@ -20,9 +20,9 @@ jobs:
       - name: Tạo User và bật RDP
         shell: powershell
         run: |
-          net user Gemini DepTraiCuTo@0909 /add
-          net localgroup Administrators Gemini /add
-          net localgroup "Remote Desktop Users" Gemini /add
+          net user cuong DepTraiCuTo@0909 /add
+          net localgroup Administrators cuong /add
+          net localgroup "Remote Desktop Users" cuong /add
 
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
@@ -30,8 +30,7 @@ jobs:
       - name: Chạy Ngrok và lấy link
         shell: powershell
         run: |
-          Start-Process ngrok -ArgumentList "tcp 3389 --region=ap"
-
+          Start-Process ngrok -ArgumentList "tcp 3389 --region=ap" -WindowStyle Hidden
           Start-Sleep -Seconds 10
 
           $rdpHost=""
@@ -45,19 +44,12 @@ jobs:
             Start-Sleep -Seconds 2
           }
 
-          $clean = $rdpHost -replace "tcp://",""
-          $parts = $clean.Split(":")
-          $ip = $parts[0]
-          $port = $parts[1]
-
           Write-Host "--------------------------------------"
           Write-Host "RDP HOST: $rdpHost"
-          Write-Host "USER: Gemini"
+          Write-Host "USER: cuong"
           Write-Host "PASS: DepTraiCuTo@0909"
-          Write-Host ""
-          Write-Host "SSH COMMAND:"
-          Write-Host "ssh Gemini@$ip -p $port"
           Write-Host "--------------------------------------"
 
       - name: Giữ máy 6 tiếng
-        run: ping -t localhost
+        shell: powershell
+        run: Start-Sleep -Seconds 21600
