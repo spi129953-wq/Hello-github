@@ -32,26 +32,26 @@ jobs:
         run: |
           Start-Process ngrok -ArgumentList "tcp 3389 --region=ap"
 
-          # đợi ngrok khởi động
           Start-Sleep -Seconds 10
 
-          $host=""
+          $rdpHost=""
+
           for ($i=0; $i -lt 15; $i++) {
             try {
               $tunnel = Invoke-RestMethod http://127.0.0.1:4040/api/tunnels
-              $host = $tunnel.tunnels[0].public_url
-              if ($host) { break }
+              $rdpHost = $tunnel.tunnels[0].public_url
+              if ($rdpHost) { break }
             } catch {}
             Start-Sleep -Seconds 2
           }
 
-          $host_clean = $host -replace "tcp://",""
-          $parts = $host_clean.Split(":")
+          $clean = $rdpHost -replace "tcp://",""
+          $parts = $clean.Split(":")
           $ip = $parts[0]
           $port = $parts[1]
 
           Write-Host "--------------------------------------"
-          Write-Host "RDP HOST: $host"
+          Write-Host "RDP HOST: $rdpHost"
           Write-Host "USER: Gemini"
           Write-Host "PASS: DepTraiCuTo@0909"
           Write-Host ""
