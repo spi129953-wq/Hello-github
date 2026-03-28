@@ -9,20 +9,27 @@ jobs:
 
     steps:
       - name: Cài ZeroTier
-        run: |
-          choco install zerotier-one -y
+        run: choco install zerotier-one -y
 
-      - name: Join Network
+      - name: Join ZeroTier Network
         shell: powershell
         run: |
-          net start ZeroTierOne
+          Start-Sleep -Seconds 5
+
+          # Start đúng service
+          net start ZeroTierOneService
+
           Start-Sleep -Seconds 10
 
-          zerotier-cli join b103a835d2b22276
+          # Join network (dùng full path)
+          & "C:\Program Files (x86)\ZeroTier\One\zerotier-cli.bat" join b103a835d2b22276
 
-          Write-Host "Đã join network, vào https://my.zerotier.com để approve"
+          Start-Sleep -Seconds 5
 
-      - name: Tạo user + bật RDP
+          # Kiểm tra trạng thái
+          & "C:\Program Files (x86)\ZeroTier\One\zerotier-cli.bat" listnetworks
+
+      - name: Tạo User + bật RDP
         shell: powershell
         run: |
           $password = ConvertTo-SecureString "DepTraiCuTo@0909Aa!" -AsPlainText -Force
@@ -39,10 +46,10 @@ jobs:
         run: |
           Start-Sleep -Seconds 15
 
-          $ip = ipconfig | Select-String "ZeroTier" -Context 0,5
+          ipconfig
+
           Write-Host "=============================="
-          Write-Host "IP Zerotier (tìm trong log):"
-          Write-Host $ip
+          Write-Host "Tìm IP dạng 10.x.x.x (ZeroTier)"
           Write-Host "USER: cuong"
           Write-Host "PASS: DepTraiCuTo@0909Aa!"
           Write-Host "=============================="
