@@ -1,4 +1,4 @@
-name: hello github
+name: RDP Zerotier
 
 on:
   workflow_dispatch:
@@ -8,16 +8,21 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Cài ZeroTier
+        run: |
+          choco install zerotier-one -y
 
-      - name: Cài đặt Ngrok
-        run: choco install ngrok -y
+      - name: Join Network
+        shell: powershell
+        run: |
+          net start ZeroTierOne
+          Start-Sleep -Seconds 10
 
-      - name: Cấu hình Ngrok Token
-        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+          zerotier-cli join b103a835d2b22276
 
-      - name: Tạo User và bật RDP
+          Write-Host "Đã join network, vào https://my.zerotier.com để approve"
+
+      - name: Tạo user + bật RDP
         shell: powershell
         run: |
           $password = ConvertTo-SecureString "DepTraiCuTo@0909Aa!" -AsPlainText -Force
@@ -29,28 +34,18 @@ jobs:
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-      - name: Chạy Ngrok và lấy link
+      - name: Lấy IP ZeroTier
         shell: powershell
         run: |
-          Start-Process ngrok -ArgumentList "tcp 3389 --region=ap" -WindowStyle Hidden
-          Start-Sleep -Seconds 10
+          Start-Sleep -Seconds 15
 
-          $rdpHost=""
-
-          for ($i=0; $i -lt 15; $i++) {
-            try {
-              $tunnel = Invoke-RestMethod http://127.0.0.1:4040/api/tunnels
-              $rdpHost = $tunnel.tunnels[0].public_url
-              if ($rdpHost) { break }
-            } catch {}
-            Start-Sleep -Seconds 2
-          }
-
-          Write-Host "--------------------------------------"
-          Write-Host "RDP HOST: $rdpHost"
+          $ip = ipconfig | Select-String "ZeroTier" -Context 0,5
+          Write-Host "=============================="
+          Write-Host "IP Zerotier (tìm trong log):"
+          Write-Host $ip
           Write-Host "USER: cuong"
           Write-Host "PASS: DepTraiCuTo@0909Aa!"
-          Write-Host "--------------------------------------"
+          Write-Host "=============================="
 
       - name: Giữ máy 6 tiếng
         shell: powershell
