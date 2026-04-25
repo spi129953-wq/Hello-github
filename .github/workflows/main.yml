@@ -1,4 +1,4 @@
-name: RDP Zerotier
+name: Parsec Auto Login
 
 on:
   workflow_dispatch:
@@ -8,50 +8,36 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Cài ZeroTier
-        run: choco install zerotier-one -y
-
-      - name: Join ZeroTier Network
-        shell: powershell
-        run: |
-          Start-Sleep -Seconds 5
-
-          # Start đúng service
-          net start ZeroTierOneService
-
-          Start-Sleep -Seconds 10
-
-          # Join network (dùng full path)
-          & "C:\Program Files (x86)\ZeroTier\One\zerotier-cli.bat" join b103a835d2b22276
-
-          Start-Sleep -Seconds 5
-
-          # Kiểm tra trạng thái
-          & "C:\Program Files (x86)\ZeroTier\One\zerotier-cli.bat" listnetworks
-
-      - name: Tạo User + bật RDP
+      - name: Tạo User
         shell: powershell
         run: |
           $password = ConvertTo-SecureString "DepTraiCuTo@0909Aa!" -AsPlainText -Force
           New-LocalUser "cuong" -Password $password -FullName "cuong"
-
           Add-LocalGroupMember -Group "Administrators" -Member "cuong"
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "cuong"
 
-          reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-      - name: Lấy IP ZeroTier
+      - name: Cài Parsec
         shell: powershell
         run: |
+          $url = "https://builds.parsecgaming.com/package/parsec-windows.exe"
+          $output = "$env:TEMP\parsec-installer.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/silent", "/quiet", "/norestart" -Wait
           Start-Sleep -Seconds 15
 
-          ipconfig
-
+      - name: Đăng nhập Parsec
+        shell: powershell
+        run: |
+          Start-Sleep -Seconds 10
+          $parsecd = "C:\Program Files\Parsec\parsecd.exe"
+          & $parsecd account login --email "${{ secrets.PARSEC_EMAIL }}" --password "${{ secrets.PARSEC_PASS }}"
+          Start-Sleep -Seconds 5
+          & $parsecd host enable
+          & $parsecd host name "GitHub-Runner"
+          Start-Sleep -Seconds 5
+          
           Write-Host "=============================="
-          Write-Host "Tìm IP dạng 10.x.x.x (ZeroTier)"
-          Write-Host "USER: cuong"
-          Write-Host "PASS: DepTraiCuTo@0909Aa!"
+          Write-Host "Đã đăng nhập & bật Hosting!"
+          Write-Host "Máy sẽ hiện trong App Parsec của bạn"
           Write-Host "=============================="
 
       - name: Giữ máy 6 tiếng
